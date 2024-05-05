@@ -1,0 +1,59 @@
+name: CI Compilar kernel
+
+on:
+  issues:
+     types: [opened, edited]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+            
+      - name: Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential linux-headers-$(uname -r) libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm git ccache
+        
+      - name: Deletar actions antigas com falhas
+        run: |
+             curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/${{ github.repository }}/actions/runs \
+             | jq -r '.workflow_runs[] | select(.conclusion == "failure") | .id' \
+             | xargs -I {} curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/${{ github.repository }}/actions/runs/{}
+         
+      - name: Baixar e descompactar o kernel
+        run: |
+          KERNEL_SOURCE_URL=https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.1.60.tar.xz
+          wget $KERNEL_SOURCE_URL
+          tar -xf linux-6.1.60.tar.xz
+
+      - name: Chegar Ajuda Kernel
+        run: |
+          cd linux-6.1.60
+          make help
+          
+      - name: Ler conteúdo da issue e gravar em .config
+        run: |
+          ISSUE_NUMBER=$(echo "$GITHUB_REF" | awk -F'/' '{print $3}')
+          CONTENT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues/${ISSUE_NUMBER}" | jq -r .body)
+          echo "$CONTENT" > linux-6.1.60/.config
+          
+      - name: Compilar Kernel 
+        run: |
+          ls
+          cd linux-6.1.60
+          make -j$(nproc)
+          ls arch/x86/boot/
+       #   make x86_64_defconfig
+
+      - name: Upload de artefatos
+        uses: actions/upload-artifact@v2
+        with:
+          name: kernel-image
+          path: linux-6.1.60/arch/x86/boot/bzImage
