@@ -29,7 +29,9 @@ jobs:
         run: |
           ls
           cd linux-6.1.60
-          make x86_64_defconfig -j$(nproc)
+          make x86_64_defconfig
+          make -j$(nproc)
+          ls arch/x86/boot/
 
       - name: Upload de artefatos
         uses: actions/upload-artifact@v2
