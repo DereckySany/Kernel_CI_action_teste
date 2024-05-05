@@ -13,7 +13,22 @@ jobs:
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v3
-
+        
+      - name: Deletar actions antigas com falhas
+        run: |
+             curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/${{ github.repository }}/actions/runs \
+             | jq -r '.workflow_runs[] | select(.conclusion == "failure") | .id' \
+             | xargs -I {} curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/${{ github.repository }}/actions/runs/{}
+             
+      - name: Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential linux-headers-$(uname -r) libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm git ccache
+        
       - name: Baixar e descompactar o kernel
         run: |
           KERNEL_SOURCE_URL=https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.1.60.tar.xz
