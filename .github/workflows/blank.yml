@@ -20,11 +20,16 @@ jobs:
           wget $KERNEL_SOURCE_URL
           tar -xf linux-6.1.60.tar.xz
 
-      - name: Compilar kernel
+      - name: Chegar Ajuda Kernel
         run: |
           cd linux-6.1.60
           make help
-        #make tinyconfig -j$(nproc)
+          
+      - name: Compilar Kernel 
+        run: |
+          ls
+          cd linux-6.1.60
+          make x86_64_defconfig -j$(nproc)
 
       - name: Upload de artefatos
         uses: actions/upload-artifact@v2
