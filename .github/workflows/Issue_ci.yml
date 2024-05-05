@@ -1,4 +1,4 @@
-name: CI Compilar kernel
+name: CI Issues Compilar kernel
 
 on:
   issues:
