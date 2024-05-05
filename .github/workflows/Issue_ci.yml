@@ -45,7 +45,7 @@ jobs:
           echo "$CONTENT" > linux-6.1.60/.config
           
       - name: Ler conteúdo da issue
-        if: github.event_name == 'issue'
+        if: github.event_name == 'issues'
         id: get_issue_content
         run: |
           ISSUE_NUMBER=$(echo "$GITHUB_REF" | awk -F'/' '{print $3}')
