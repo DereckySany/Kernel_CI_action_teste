@@ -36,7 +36,8 @@ jobs:
       - name: Chegar Ajuda Kernel
         run: |
           cd linux-6.1.60
-          make help
+          env
+        #  make help
           
       - name: Ler Conteúdo Da Issue E Gravar Em .config
         run: |
@@ -64,6 +65,7 @@ jobs:
            cat issue_content.txt
           
       - name: Compilar Kernel 
+        if: github.event_name == 'issue'
         run: |
           ls
           cd linux-6.1.60
