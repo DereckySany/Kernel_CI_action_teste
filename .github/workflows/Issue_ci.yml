@@ -44,9 +44,23 @@ jobs:
           CONTENT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues/${ISSUE_NUMBER}" | jq -r .body)
           echo "$CONTENT" > linux-6.1.60/.config
           
+      - name: Ler conteúdo da issue
+        if: github.event_name == 'issue'
+        id: get_issue_content
+        run: |
+          ISSUE_NUMBER=$(echo "$GITHUB_REF" | awk -F'/' '{print $3}')
+          CONTENT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues/${ISSUE_NUMBER}" | jq -r .body)
+          echo "::set-output name=issue_content::$CONTENT"
+
+      - name: Criar arquivo de texto com conteúdo da issue
+        if: steps.get_issue_content.outputs.issue_content != ''
+        run: echo "${{ steps.get_issue_content.outputs.issue_content }}" > issue_content.txt     
+        
       - name: Ler Issue Config
         run: |
            cat linux-6.1.60/.config
+           echo "++++++++++++++++++++++++"
+           cat issue_content.txt
           
       - name: Compilar Kernel 
         run: |
