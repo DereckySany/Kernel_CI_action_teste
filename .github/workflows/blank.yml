@@ -23,7 +23,8 @@ jobs:
       - name: Compilar kernel
         run: |
           cd linux-6.1.60
-          make -j$(nproc)
+          make help
+        #make tinyconfig -j$(nproc)
 
       - name: Upload de artefatos
         uses: actions/upload-artifact@v2
