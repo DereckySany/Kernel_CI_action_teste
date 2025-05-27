@@ -107,8 +107,9 @@ jobs:
         run: |
           cd ${{ steps.download_kernel.outputs.kernel_dir }}
           make defconfig # Use 'defconfig' for a sensible default configuration
-          make -j$(nproc)
-          tree
+          make help
+          #make -j$(nproc)
+          #tree
           # bzImage modules # Compile bzImage and modules
 
       - name: Upload de artefatos
@@ -121,3 +122,55 @@ jobs:
             ${{ steps.download_kernel.outputs.kernel_dir }}/.config
             # You might also want to upload modules, but they are typically in a .deb or .rpm package.
             # For a basic kernel image, bzImage is the primary output.
+  # Job for building Debian packages
+  build_Deb_Package:
+    needs: build # This job depends on the 'build' job completing successfully
+    runs-on: ${{ github.event.inputs.RUN_OS_VERSON }}
+    if: github.event.inputs.job == 'build_Deb_Package'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar artefatos do kernel compilado
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.event.inputs.VersionKernel }}-kernel-artifacts
+          path: ./${{ github.event.inputs.VersionKernel }} # Download to the kernel source directory
+
+      - name: Instalar dependências para Debian packaging
+        run: |
+          sudo apt-get update
+          # kernel-package provides 'make-kpkg' for easier Debian package creation.
+          # fakeroot allows creating packages without root privileges.
+          sudo apt-get install -y build-essential libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm git ccache wget xz-utils kernel-package fakeroot libdpkg-perl
+
+      - name: Preparar e construir pacotes .deb
+        run: |
+          # The artifact was downloaded to ${{ github.event.inputs.VersionKernel }}
+          cd ${{ github.event.inputs.VersionKernel }}
+          
+          # make-kpkg is the traditional way to build Debian kernel packages.
+          # --initrd: Include initrd in the image package
+          # --append-to-version: Append a custom string to the kernel version. Highly recommended!
+          # --stem: Base name for the kernel image.
+          # kernel_image: Build the kernel image package.
+          # kernel_headers: Build the kernel headers package.
+          # (Optional) modules_image: If you compile modules separately and want to package them.
+          
+          # Ensure .config is present, it should be from the downloaded artifact.
+          # You might need to move .config to the root of the kernel source if it's nested.
+          # Example assumes .config is directly in the downloaded directory.
+          
+          fakeroot make-kpkg --initrd \
+                     --append-to-version=-github-actions-${{ github.run_number }} \
+                     kernel_image kernel_headers
+          
+          # List the created .deb packages
+          ls -lh ../*.deb
+
+      - name: Upload de pacotes .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.VersionKernel }}-deb-packages
+          path: |
+            *.deb # Upload all .deb files from the parent directory
+            # If the .deb files are created in a specific subdirectory, adjust the path.
