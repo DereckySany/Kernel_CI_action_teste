@@ -63,7 +63,9 @@ jobs:
         run: |
           cd ${{ steps.download_kernel.outputs.kernel_dir }}
           make defconfig # Use 'defconfig' for a sensible default configuration
-          make -j$(nproc) bzImage modules # Compile bzImage and modules
+          make -j$(nproc)
+          tree
+          # bzImage modules # Compile bzImage and modules
 
       - name: Upload de artefatos
         uses: actions/upload-artifact@v4
