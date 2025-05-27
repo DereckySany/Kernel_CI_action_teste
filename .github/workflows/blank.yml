@@ -1,10 +1,6 @@
 name: CI Compilar kernel
 
 on:
-#  push:
-#    branches: [ "main" ]
-#  pull_request:
-#    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -13,45 +9,69 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: |
-            README.md
-          sparse-checkout-cone-mode: false   
-      - name: Deletar actions antigas com falhas
+          # If you don't need a sparse checkout, remove these lines for simplicity.
+           sparse-checkout: |
+             README.md
+           sparse-checkout-cone-mode: false   
+      
+      - name: Deletar actions antigas com falhas (Opcional - Requer GITHUB_TOKEN permissions)
         run: |
-             curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-             -H "Accept: application/vnd.github.v3+json" \
-             https://api.github.com/repos/${{ github.repository }}/actions/runs \
-             | jq -r '.workflow_runs[] | select(.conclusion == "failure") | .id' \
-             | xargs -I {} curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-             -H "Accept: application/vnd.github.v3+json" \
-             https://api.github.com/repos/${{ github.repository }}/actions/runs/{}
-             
+          # This step requires appropriate permissions for GITHUB_TOKEN
+          # and might be better handled by GitHub's retention policies or manually.
+          # It also requires 'jq' to be installed.
+          # For a standard CI, this is often unnecessary.
+          sudo apt-get update && sudo apt-get install -y jq
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=failure" \
+          | jq -r '.workflow_runs[] | .id' \
+          | xargs -I {} curl -X DELETE \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs/{}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Instalar dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential linux-headers-$(uname -r) libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm git ccache
+          sudo apt-get install -y build-essential libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm git ccache wget xz-utils
+          # Removed 'linux-headers-$(uname -r)' as you're compiling a new kernel, not using existing headers.
+          # Added 'wget' and 'xz-utils' for downloading and decompressing the kernel source.
         
       - name: Baixar e descompactar o kernel
+        id: download_kernel
         run: |
-          KERNEL_SOURCE_URL=https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.15.tar.xz
-          wget $KERNEL_SOURCE_URL
-          tar -xf linux-6.15.tar.xz
-
-      - name: Chegar Ajuda Kernel
-        run: |
-          cd linux-6.15
-          make help
+          # Using a specific kernel version for stability and reproducibility.
+          # Always verify the latest stable kernel version if you intend to update.
+          KERNEL_VERSION="6.6.30" # Example: Use a stable long-term support (LTS) version
+          KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
+          KERNEL_DIR="linux-${KERNEL_VERSION}"
+          KERNEL_SOURCE_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
           
-      - name: Compilar Kernel 
+          wget $KERNEL_SOURCE_URL
+          tar -xf ${KERNEL_TAR}
+          
+          echo "kernel_dir=${KERNEL_DIR}" >> $GITHUB_OUTPUT
+
+      - name: Mudar para o diretório do Kernel
         run: |
-          ls
-          cd linux-6.15
-          make x86_64_defconfig
-          make -j$(nproc)
-          ls arch/x86/boot/
+          cd ${{ steps.download_kernel.outputs.kernel_dir }}
+          # This step is mainly for clarity, ensuring you're in the right directory.
+
+      - name: Compilar Kernel
+        run: |
+          cd ${{ steps.download_kernel.outputs.kernel_dir }}
+          make defconfig # Use 'defconfig' for a sensible default configuration
+          make -j$(nproc) bzImage modules # Compile bzImage and modules
 
       - name: Upload de artefatos
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: kernel-image
-          path: linux-6.15/arch/x86/boot/bzImage
+          name: kernel-artifacts
+          path: |
+            ${{ steps.download_kernel.outputs.kernel_dir }}/arch/x86/boot/bzImage
+            ${{ steps.download_kernel.outputs.kernel_dir }}/System.map
+            ${{ steps.download_kernel.outputs.kernel_dir }}/.config
+            # You might also want to upload modules, but they are typically in a .deb or .rpm package.
+            # For a basic kernel image, bzImage is the primary output.
