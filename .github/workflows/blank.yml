@@ -31,19 +31,19 @@ jobs:
         
       - name: Baixar e descompactar o kernel
         run: |
-          KERNEL_SOURCE_URL=https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.1.60.tar.xz
+          KERNEL_SOURCE_URL=https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.15.tar.xz
           wget $KERNEL_SOURCE_URL
-          tar -xf linux-6.1.60.tar.xz
+          tar -xf linux-6.15.tar.xz
 
       - name: Chegar Ajuda Kernel
         run: |
-          cd linux-6.1.60
+          cd linux-6.15
           make help
           
       - name: Compilar Kernel 
         run: |
           ls
-          cd linux-6.1.60
+          cd linux-6.15
           make x86_64_defconfig
           make -j$(nproc)
           ls arch/x86/boot/
@@ -52,4 +52,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: kernel-image
-          path: linux-6.1.60/arch/x86/boot/bzImage
+          path: linux-6.15/arch/x86/boot/bzImage
