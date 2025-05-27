@@ -2,10 +2,49 @@ name: CI Compilar kernel
 
 on:
   workflow_dispatch:
-
+    inputs:
+      RUN_OS_VERSON:
+        required: true
+        description: "Variant OS:"
+        type: choice
+        default: ubuntu-latest
+        options:
+          - ubuntu-latest
+          - ubuntu-22.04
+          - ubuntu-20.04
+      Vkernel:
+       required: true
+       description: "kernel base version:"
+       default: v6.x
+       options:
+       - v1.x
+       - v2.x
+       - v3.x
+       - v4.x
+       - v5.x
+       - v6.x
+      VersionKernel:
+      required: true 
+      description: "Choice a version of kernel: "
+      default: "linux-6.15"
+      options:
+       - 'linux-6.15'
+       - 'linux-6.14.8'
+       - 'linux-6.12.30'
+       - 'linux-6.6.92'
+       - 'linux-6.1.140'
+      job:
+        description: 'Variant api:'
+        required: true
+        type: choice
+        default: 'build'
+        options:
+          - build
+          - build_Deb_Package
+          - build_Rpm_Package
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.inputs.RUN_OS_VERSON }}
     steps:
       #- uses: actions/checkout@v4
         #with:
@@ -44,10 +83,10 @@ jobs:
         run: |
           # Using a specific kernel version for stability and reproducibility.
           # Always verify the latest stable kernel version if you intend to update.
-          KERNEL_VERSION="6.6.30" # Example: Use a stable long-term support (LTS) version
+          KERNEL_VERSION="${{ github.event.inputs.VersionKernel }}" # Example: Use a stable long-term support (LTS) version
           KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
           KERNEL_DIR="linux-${KERNEL_VERSION}"
-          KERNEL_SOURCE_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
+          KERNEL_SOURCE_URL="https://cdn.kernel.org/pub/linux/kernel/${{ github.event.inputs.Vkernel }}/${KERNEL_TAR}"
           
           wget $KERNEL_SOURCE_URL
           tar -xf ${KERNEL_TAR}
