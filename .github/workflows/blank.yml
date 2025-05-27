@@ -86,8 +86,8 @@ jobs:
           # Using a specific kernel version for stability and reproducibility.
           # Always verify the latest stable kernel version if you intend to update.
           KERNEL_VERSION="${{ github.event.inputs.VersionKernel }}" # Example: Use a stable long-term support (LTS) version
-          KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
-          KERNEL_DIR="linux-${KERNEL_VERSION}"
+          KERNEL_TAR="${KERNEL_VERSION}.tar.xz"
+          KERNEL_DIR="${KERNEL_VERSION}"
           KERNEL_SOURCE_URL="https://cdn.kernel.org/pub/linux/kernel/${{ github.event.inputs.Vkernel }}/${KERNEL_TAR}"
           
           wget $KERNEL_SOURCE_URL
