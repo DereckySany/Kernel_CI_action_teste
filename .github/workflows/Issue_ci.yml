@@ -9,8 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do repositório
-        uses: actions/checkout@v4
+      #- name: Checkout do repositório
+      #  uses: actions/checkout@v4
             
       - name: Instalar Dependências
         run: |
@@ -29,13 +29,13 @@ jobs:
          
       - name: Baixar E Descompactar O Kernel
         run: |
-          KERNEL_SOURCE_URL=https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.1.60.tar.xz
+          KERNEL_SOURCE_URL=https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.15.tar.xz
           wget $KERNEL_SOURCE_URL
-          tar -xf linux-6.1.60.tar.xz
+          tar -xf linux-6.15.tar.xz
 
       - name: Chegar Ajuda Kernel
         run: |
-          cd linux-6.1.60
+          cd linux-6.15
           env
         #  make help
           
@@ -44,7 +44,7 @@ jobs:
           echo "$GITHUB_RUN_ATTEMPT"
           ISSUE_NUMBER=$(echo "$GITHUB_RUN_ATTEMPT" | awk -F'/' '{print $3}')
           CONTENT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues/${ISSUE_NUMBER}" | jq -r .body)
-          echo "$CONTENT" > linux-6.1.60/.config
+          echo "$CONTENT" > linux-6.15/.config
           
       - name: Ler conteúdo da issue
         if: github.event_name == 'issues'
@@ -60,7 +60,7 @@ jobs:
         
       - name: Ler Issue Config
         run: |
-           cat linux-6.1.60/.config
+           cat linux-6.15/.config
            echo "++++++++++++++++++++++++"
            cat issue_content.txt
           
@@ -68,13 +68,13 @@ jobs:
         if: github.event_name == 'issue'
         run: |
           ls
-          cd linux-6.1.60
+          cd linux-6.15
           make -j$(nproc)
           ls arch/x86/boot/
        #   make x86_64_defconfig
 
       - name: Upload De Artefatos
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: kernel-image
-          path: linux-6.1.60/arch/x86/boot/bzImage
+          path: linux-6.15/arch/x86/boot/bzImage
