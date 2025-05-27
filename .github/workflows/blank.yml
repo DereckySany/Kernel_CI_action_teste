@@ -35,6 +35,9 @@ on:
           - 'linux-6.12.30'
           - 'linux-6.6.92'
           - 'linux-6.1.140'
+          - 'linux-5.15.184'
+          - 'linux-5.10.237'
+          - 'linux-5.4.293'
       job:
         description: 'Variant api:'
         required: true
@@ -111,7 +114,7 @@ jobs:
       - name: Upload de artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-artifacts
+          name: ${{ github.event.inputs.VersionKernel }}-kernel-artifacts
           path: |
             ${{ steps.download_kernel.outputs.kernel_dir }}/arch/x86/boot/bzImage
             ${{ steps.download_kernel.outputs.kernel_dir }}/System.map
