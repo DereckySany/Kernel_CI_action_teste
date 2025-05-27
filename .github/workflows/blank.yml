@@ -108,8 +108,8 @@ jobs:
           cd ${{ steps.download_kernel.outputs.kernel_dir }}
           make defconfig # Use 'defconfig' for a sensible default configuration
           make help
-          #make -j$(nproc)
-          make bindeb-pkg -j$(nproc)
+          make -j$(nproc)
+          #make bindeb-pkg -j$(nproc)
           #tree
           # bzImage modules # Compile bzImage and modules
 
@@ -161,10 +161,10 @@ jobs:
           # You might need to move .config to the root of the kernel source if it's nested.
           # Example assumes .config is directly in the downloaded directory.
           
-          fakeroot make-kpkg --initrd \
-                     --append-to-version=-github-actions-${{ github.run_number }} \
-                     kernel_image kernel_headers
-          
+          #fakeroot make-kpkg --initrd \
+          #           --append-to-version=-github-actions-${{ github.run_number }} \
+          #           kernel_image kernel_headers
+          make bindeb-pkg -j$(nproc) 
           # List the created .deb packages
           ls -lh ../*.deb
 
