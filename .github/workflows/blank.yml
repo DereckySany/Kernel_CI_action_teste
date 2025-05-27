@@ -13,26 +13,26 @@ on:
           - ubuntu-22.04
           - ubuntu-20.04
       Vkernel:
-       required: true
-       description: "kernel base version:"
-       default: v6.x
-       options:
-       - v1.x
-       - v2.x
-       - v3.x
-       - v4.x
-       - v5.x
-       - v6.x
+        required: true
+        description: "kernel base version:"
+        default: v6.x
+        options:
+          - v1.x
+          - v2.x
+          - v3.x
+          - v4.x
+          - v5.x
+          - v6.x
       VersionKernel:
-      required: true 
-      description: "Choice a version of kernel: "
-      default: "linux-6.15"
-      options:
-       - 'linux-6.15'
-       - 'linux-6.14.8'
-       - 'linux-6.12.30'
-       - 'linux-6.6.92'
-       - 'linux-6.1.140'
+        required: true 
+        description: "Choice a version of kernel: "
+        default: "linux-6.15"
+        options:
+          - 'linux-6.15'
+          - 'linux-6.14.8'
+          - 'linux-6.12.30'
+          - 'linux-6.6.92'
+          - 'linux-6.1.140'
       job:
         description: 'Variant api:'
         required: true
